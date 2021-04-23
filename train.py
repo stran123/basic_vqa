@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from tqdm import tqdm
 from torch.optim import lr_scheduler
 from data_loader import get_loader
 from models import VqaModel
@@ -48,7 +49,7 @@ def main(args):
     optimizer = optim.Adam(params, lr=args.learning_rate)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 
-    for epoch in range(args.num_epochs):
+    for epoch in tqdm(range(args.num_epochs)):
 
         for phase in ['train', 'valid']:
 
@@ -62,9 +63,8 @@ def main(args):
                 model.train()
             else:
                 model.eval()
-
-            for batch_idx, batch_sample in enumerate(data_loader[phase]):
-
+            batch_idx = 0
+            for batch_sample in tqdm(data_loader[phase]):
                 image = batch_sample['image'].to(device)
                 question = batch_sample['question'].to(device)
                 label = batch_sample['answer_label'].to(device)
@@ -95,7 +95,8 @@ def main(args):
                 if batch_idx % 100 == 0:
                     print('| {} SET | Epoch [{:02d}/{:02d}], Step [{:04d}/{:04d}], Loss: {:.4f}'
                           .format(phase.upper(), epoch+1, args.num_epochs, batch_idx, int(batch_step_size), loss.item()))
-
+                batch_idx += 1
+                
             # Print the average loss and accuracy in an epoch.
             epoch_loss = running_loss / batch_step_size
             epoch_acc_exp1 = running_corr_exp1.double() / len(data_loader[phase].dataset)      # multiple choice
@@ -164,10 +165,10 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=30,
                         help='number of epochs.')
 
-    parser.add_argument('--batch_size', type=int, default=256,
+    parser.add_argument('--batch_size', type=int, default=128,
                         help='batch_size.')
 
-    parser.add_argument('--num_workers', type=int, default=8,
+    parser.add_argument('--num_workers', type=int, default=4,
                         help='number of processes working on cpu.')
 
     parser.add_argument('--save_step', type=int, default=1,

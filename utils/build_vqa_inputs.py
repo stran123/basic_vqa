@@ -14,7 +14,7 @@ def extract_answers(q_answers, valid_answer_set):
 
 def vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, image_set):
     print('building vqa %s dataset' % image_set)
-    if image_set in ['train2014', 'val2014']:
+    if image_set in ['train2015', 'val2015']:
         load_answer = True
         with open(annotation_file % image_set) as f:
             annotations = json.load(f)['annotations']
@@ -25,7 +25,7 @@ def vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 
         questions = json.load(f)['questions']
     coco_set_name = image_set.replace('-dev', '')
     abs_image_dir = os.path.abspath(image_dir % coco_set_name)
-    image_name_template = 'COCO_'+coco_set_name+'_%012d'
+    image_name_template = 'abstract_v002_'+coco_set_name+'_%012d'
     dataset = [None]*len(questions)
     
     unk_ans_count = 0
@@ -35,9 +35,9 @@ def vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 
         image_id = q['image_id']
         question_id = q['question_id']
         image_name = image_name_template % image_id
-        image_path = os.path.join(abs_image_dir, image_name+'.jpg')
+        image_path = os.path.join(abs_image_dir, image_name+'.png')
         question_str = q['question']
-        question_tokens = text_processing.tokenize(question_str)
+        question_tokens = text_helper.tokenize(question_str)
         
         iminfo = dict(image_name=image_name,
                       image_path=image_path,
@@ -62,23 +62,23 @@ def vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 
 def main(args):
     
     image_dir = args.input_dir+'/Resized_Images/%s/'
-    annotation_file = args.input_dir+'/Annotations/v2_mscoco_%s_annotations.json'
-    question_file = args.input_dir+'/Questions/v2_OpenEnded_mscoco_%s_questions.json'
+    annotation_file = args.input_dir+'/Annotations/abstract_v002_%s_annotations.json'
+    question_file = args.input_dir+'/Questions/OpenEnded_abstract_v002_%s_questions.json'
 
     vocab_answer_file = args.output_dir+'/vocab_answers.txt'
-    answer_dict = text_processing.VocabDict(vocab_answer_file)
+    answer_dict = text_helper.VocabDict(vocab_answer_file)
     valid_answer_set = set(answer_dict.word_list)    
     
-    train = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'train2014')
-    valid = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'val2014')
+    train = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'train2015')
+    valid = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'val2015')
     test = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'test2015')
-    test_dev = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'test-dev2015')
+#     test_dev = vqa_processing(image_dir, annotation_file, question_file, valid_answer_set, 'test-dev2015')
     
     np.save(args.output_dir+'/train.npy', np.array(train))
     np.save(args.output_dir+'/valid.npy', np.array(valid))
     np.save(args.output_dir+'/train_valid.npy', np.array(train+valid))
     np.save(args.output_dir+'/test.npy', np.array(test))
-    np.save(args.output_dir+'/test-dev.npy', np.array(test_dev))
+#     np.save(args.output_dir+'/test-dev.npy', np.array(test_dev))
 
 
 if __name__ == '__main__':
