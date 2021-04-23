@@ -15,8 +15,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main(args):
 
-    os.makedirs(args.log_dir, exist_ok=True)
-    os.makedirs(args.model_dir, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.output_dir+'/logs', exist_ok=True)
+    os.makedirs(args.output_dir+'/models', exist_ok=True)
 
     data_loader = get_loader(
         input_dir=args.input_dir,
@@ -106,7 +107,7 @@ def main(args):
                   .format(phase.upper(), epoch+1, args.num_epochs, epoch_loss, epoch_acc_exp1, epoch_acc_exp2))
 
             # Log the loss and accuracy in an epoch.
-            with open(os.path.join(args.log_dir, '{}-log-epoch-{:02}.txt')
+            with open(os.path.join(args.output_dir, 'logs/{}-log-epoch-{:02}.txt')
                       .format(phase, epoch+1), 'w') as f:
                 f.write(str(epoch+1) + '\t'
                         + str(epoch_loss) + '\t'
@@ -116,7 +117,7 @@ def main(args):
         # Save the model check points.
         if (epoch+1) % args.save_step == 0:
             torch.save({'epoch': epoch+1, 'state_dict': model.state_dict()},
-                       os.path.join(args.model_dir, 'model-epoch-{:02d}.ckpt'.format(epoch+1)))
+                       os.path.join(args.output_dir, 'models/model-epoch-{:02d}.ckpt'.format(epoch+1)))
 
 
 if __name__ == '__main__':
@@ -126,11 +127,8 @@ if __name__ == '__main__':
     parser.add_argument('--input_dir', type=str, default='./datasets',
                         help='input directory for visual question answering.')
 
-    parser.add_argument('--log_dir', type=str, default='./logs',
-                        help='directory for logs.')
-
-    parser.add_argument('--model_dir', type=str, default='./models',
-                        help='directory for saved models.')
+    parser.add_argument('--output_dir', type=str, default='./output',
+                        help='directory for logs and model.')
 
     parser.add_argument('--max_qst_length', type=int, default=30,
                         help='maximum length of question. \
