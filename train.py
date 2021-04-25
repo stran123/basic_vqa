@@ -38,7 +38,8 @@ def main(args):
         ans_vocab_size=ans_vocab_size,
         word_embed_size=args.word_embed_size,
         num_layers=args.num_layers,
-        hidden_size=args.hidden_size).to(device)
+        hidden_size=args.hidden_size,
+        use_transformer=args.use_transformer).to(device)
 
     criterion = nn.CrossEntropyLoss()
 
@@ -171,6 +172,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--save_step', type=int, default=1,
                         help='save step of model.')
+    
+    parser.add_argument('--use_transformer', type=bool, default=False,
+                        help='whether or not to use a transformer model for question embedding.')
 
     args = parser.parse_args()
 
