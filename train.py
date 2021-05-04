@@ -49,7 +49,8 @@ def main(args):
         + list(model.fc2.parameters())
 
     optimizer = optim.Adam(params, lr=args.learning_rate)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    scheduler = lr_scheduler.StepLR(
+        optimizer, step_size=args.step_size, gamma=args.gamma)
 
     for epoch in tqdm(range(args.num_epochs)):
 
@@ -70,13 +71,15 @@ def main(args):
                 image = batch_sample['image'].to(device)
                 question = batch_sample['question'].to(device)
                 label = batch_sample['answer_label'].to(device)
-                multi_choice = batch_sample['answer_multi_choice']  # not tensor, list.
+                # not tensor, list.
+                multi_choice = batch_sample['answer_multi_choice']
 
                 optimizer.zero_grad()
 
                 with torch.set_grad_enabled(phase == 'train'):
 
-                    output = model(image, question)      # [batch_size, ans_vocab_size=1000]
+                    # [batch_size, ans_vocab_size=1000]
+                    output = model(image, question)
                     _, pred_exp1 = torch.max(output, 1)  # [batch_size]
                     _, pred_exp2 = torch.max(output, 1)  # [batch_size]
                     loss = criterion(output, label)
@@ -90,19 +93,23 @@ def main(args):
                 # Exp2: our model prediction to '<unk>' is NOT accepted as the answer.
                 pred_exp2[pred_exp2 == ans_unk_idx] = -9999
                 running_loss += loss.item()
-                running_corr_exp1 += torch.stack([(ans == pred_exp1.cpu()) for ans in multi_choice]).any(dim=0).sum()
-                running_corr_exp2 += torch.stack([(ans == pred_exp2.cpu()) for ans in multi_choice]).any(dim=0).sum()
+                running_corr_exp1 += torch.stack([(ans == pred_exp1.cpu())
+                                                 for ans in multi_choice]).any(dim=0).sum()
+                running_corr_exp2 += torch.stack([(ans == pred_exp2.cpu())
+                                                 for ans in multi_choice]).any(dim=0).sum()
 
                 # Print the average loss in a mini-batch.
                 if batch_idx % 100 == 0:
                     print('| {} SET | Epoch [{:02d}/{:02d}], Step [{:04d}/{:04d}], Loss: {:.4f}'
                           .format(phase.upper(), epoch+1, args.num_epochs, batch_idx, int(batch_step_size), loss.item()))
                 batch_idx += 1
-                
+
             # Print the average loss and accuracy in an epoch.
             epoch_loss = running_loss / batch_step_size
-            epoch_acc_exp1 = running_corr_exp1.double() / len(data_loader[phase].dataset)      # multiple choice
-            epoch_acc_exp2 = running_corr_exp2.double() / len(data_loader[phase].dataset)      # multiple choice
+            epoch_acc_exp1 = running_corr_exp1.double(
+            ) / len(data_loader[phase].dataset)      # multiple choice
+            epoch_acc_exp2 = running_corr_exp2.double(
+            ) / len(data_loader[phase].dataset)      # multiple choice
 
             print('| {} SET | Epoch [{:02d}/{:02d}], Loss: {:.4f}, Acc(Exp1): {:.4f}, Acc(Exp2): {:.4f} \n'
                   .format(phase.upper(), epoch+1, args.num_epochs, epoch_loss, epoch_acc_exp1, epoch_acc_exp2))
@@ -172,7 +179,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--save_step', type=int, default=1,
                         help='save step of model.')
-    
+
     parser.add_argument('--use_transformer', type=bool, default=False,
                         help='whether or not to use a transformer model for question embedding.')
 
