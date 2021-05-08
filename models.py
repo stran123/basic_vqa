@@ -182,11 +182,14 @@ class QstTransformerEncoder(nn.Module):
 
 class VqaModel(nn.Module):
 
-    def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, use_transformer=False, use_vit=False):
+    def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, use_transformer, use_vit, patch_size):
 
         super(VqaModel, self).__init__()
-        self.img_encoder = ImgViTEncoder(
-            patch_size=28) if use_vit else ImgEncoder(embed_size)
+        if use_vit:
+          print("Using ViT")
+          self.img_encoder = ImgViTEncoder(patch_size=28)
+        else:
+          self.img_encoder = ImgEncoder(embed_size)
         if use_transformer:
             print("Using transformer")
             self.qst_encoder = QstTransformerEncoder(
