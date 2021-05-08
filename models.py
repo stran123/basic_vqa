@@ -44,7 +44,7 @@ class ImgEncoder(nn.Module):
 
 
 class ImgViTEncoder(nn.Module):
-    def init(self, patch_size=28, image_size=224, num_classes=1024, dim=6, depth=6, heads=16, mlp_dim=2048, dropout=0.1, emb_dropout=0.1):
+    def init(self, patch_size, image_size=224, num_classes=1024, dim=6, depth=6, heads=16, mlp_dim=2048, dropout=0.1, emb_dropout=0.1):
         self.vit = ViT(image_size=image_size,
                        patch_size=patch_size,
                        num_classes=num_classes,
@@ -187,7 +187,7 @@ class VqaModel(nn.Module):
         super(VqaModel, self).__init__()
         if use_vit:
           print("Using ViT")
-          self.img_encoder = ImgViTEncoder(patch_size=patch_size)
+          self.img_encoder = ImgViTEncoder(patch_size)
         else:
           self.img_encoder = ImgEncoder(embed_size)
         if use_transformer:
