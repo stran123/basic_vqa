@@ -186,6 +186,7 @@ class VqaModel(nn.Module):
 
         super(VqaModel, self).__init__()
         if use_vit:
+          print(patch_size)
           print("Using ViT")
           self.img_encoder = ImgViTEncoder(patch_size)
         else:
