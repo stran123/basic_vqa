@@ -45,6 +45,7 @@ class ImgEncoder(nn.Module):
 
 class ImgViTEncoder(nn.Module):
     def __init__(self, patch_size):
+        super(ImgViTEncoder, self).__init__()
         self.vit = ViT(image_size=224,
                        patch_size=patch_size,
                        num_classes=1024,
