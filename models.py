@@ -62,12 +62,16 @@ class ImgViTEncoder(nn.Module):
 
 class QstEncoder(nn.Module):
 
-    def __init__(self, qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size):
+    def __init__(self, qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size, use_lstm=True):
 
         super(QstEncoder, self).__init__()
+        self.use_rnn = use_rnn
         self.word2vec = nn.Embedding(qst_vocab_size, word_embed_size)
         self.tanh = nn.Tanh()
-        self.lstm = nn.LSTM(word_embed_size, hidden_size, num_layers)
+        if use_lstm:
+            self.rnn = nn.LSTM(word_embed_size, hidden_size, num_layers)
+        else:
+            self.rnn = nn.RNN(word_embed_size, hidden_size, num_layers)
         # 2 for hidden and cell states
         self.fc = nn.Linear(2*num_layers*hidden_size, embed_size)
 
@@ -79,7 +83,10 @@ class QstEncoder(nn.Module):
         # [max_qst_length=30, batch_size, word_embed_size=300]
         qst_vec = qst_vec.transpose(0, 1)
         # [num_layers=2, batch_size, hidden_size=512]
-        _, (hidden, cell) = self.lstm(qst_vec)
+        if use_rnn:
+            _, (hidden, cell) = self.rnn(qst_vec)
+        else:
+            _, hidden = self.rnn(qst_vec)
         # [num_layers=2, batch_size, 2*hidden_size=1024]
         qst_feature = torch.cat((hidden, cell), 2)
         # [batch_size, num_layers=2, 2*hidden_size=1024]
@@ -183,21 +190,15 @@ class QstTransformerEncoder(nn.Module):
 
 class VqaModel(nn.Module):
 
-    def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, use_transformer, use_vit, patch_size):
+    def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, use_qst_encoder_type, use_img_encoder_type, patch_size):
 
         super(VqaModel, self).__init__()
-        if use_vit:
-          print("Using ViT")
-          self.img_encoder = ImgViTEncoder(patch_size)
-        else:
-          self.img_encoder = ImgEncoder(embed_size)
-        if use_transformer:
-            print("Using transformer")
-            self.qst_encoder = QstTransformerEncoder(
-                qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
-        else:
-            self.qst_encoder = QstEncoder(
-                qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
+        print("qst_encoder", use_qst_encoder_type)
+        self.qst_encoder = {'lstm': QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size, use_lstm=True),
+                            'rnn': QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size, use_lstm=False),
+                            'transformer': QstTransformerEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)}[use_qst_encoder_type]
+        self.img_encoder = {'vggnet': ImgEncoder(embed_size),
+                            'vit': ImgViTEncoder(patch_size)}[use_img_encoder_type]
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.5)
         self.fc1 = nn.Linear(embed_size, ans_vocab_size)
