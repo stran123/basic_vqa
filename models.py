@@ -65,7 +65,7 @@ class QstEncoder(nn.Module):
     def __init__(self, qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size, use_lstm=True):
 
         super(QstEncoder, self).__init__()
-        self.use_rnn = use_rnn
+        self.use_lstm = use_lstm
         self.word2vec = nn.Embedding(qst_vocab_size, word_embed_size)
         self.tanh = nn.Tanh()
         if use_lstm:
@@ -83,7 +83,7 @@ class QstEncoder(nn.Module):
         # [max_qst_length=30, batch_size, word_embed_size=300]
         qst_vec = qst_vec.transpose(0, 1)
         # [num_layers=2, batch_size, hidden_size=512]
-        if use_rnn:
+        if self.use_lstm:
             _, (hidden, cell) = self.rnn(qst_vec)
         else:
             _, hidden = self.rnn(qst_vec)
