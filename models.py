@@ -85,10 +85,12 @@ class QstEncoder(nn.Module):
         # [num_layers=2, batch_size, hidden_size=512]
         if self.use_lstm:
             _, (hidden, cell) = self.rnn(qst_vec)
+            qst_feature = torch.cat((hidden, cell), 2)
         else:
             _, hidden = self.rnn(qst_vec)
+            qst_feature = torch.cat((hidden, hidden), 2)
         # [num_layers=2, batch_size, 2*hidden_size=1024]
-        qst_feature = torch.cat((hidden, cell), 2)
+        
         # [batch_size, num_layers=2, 2*hidden_size=1024]
         qst_feature = qst_feature.transpose(0, 1)
         # [batch_size, 2*num_layers*hidden_size=2048]
